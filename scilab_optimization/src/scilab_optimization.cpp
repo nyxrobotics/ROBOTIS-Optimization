@@ -34,29 +34,25 @@
  *  Created on: December 1, 2016
  *      Author: sch
  */
-
 #include "scilab_optimization/scilab_optimization.h"
+extern "C" void* pvApiCtx;
 
 namespace robotis_framework
 {
-
 ScilabOptimization::ScilabOptimization()
 {
-
 }
 
 ScilabOptimization::~ScilabOptimization()
 {
-
 }
-
 
 void ScilabOptimization::initialize()
 {
 #ifdef _MSC_VER
-  if ( StartScilab(NULL,NULL,NULL) == FALSE )
+  if (StartScilab(NULL, NULL, NULL) == FALSE)
 #else
-  if ( StartScilab(SCILIB_PATH,NULL,NULL) == FALSE )
+  if (StartScilab(const_cast<char*>(SCILIB_PATH), NULL, NULL) == FALSE)
 #endif
   {
     ROS_WARN("Error while calling StartScilab");
@@ -65,137 +61,74 @@ void ScilabOptimization::initialize()
 
 void ScilabOptimization::terminate()
 {
-  if ( TerminateScilab(NULL) == FALSE )
+  if (TerminateScilab(NULL) == FALSE)
   {
-    fprintf(stderr,"Error while calling TerminateScilab\n");
+    fprintf(stderr, "Error while calling TerminateScilab\n");
     return;
   }
-  return;
 }
 
-void ScilabOptimization::solveRiccatiEquation(double *K, int *row_K, int *col_K,
-                                              double *S, int *row_S, int *col_S,
-                                              double *E, double *E_img, int *row_E, int *col_E,
-                                              double *A, int row_A, int col_A,
-                                              double *B, int row_B, int col_B,
-                                              double *Q, int row_Q, int col_Q,
-                                              double *R, int row_R, int col_R)
+void ScilabOptimization::solveRiccatiEquation(double*& K, int* row_K, int* col_K, double*& S, int* row_S, int* col_S,
+                                              double*& E, double*& E_img, int* row_E, int* col_E, double* A, int row_A,
+                                              int col_A, double* B, int row_B, int col_B, double* Q, int row_Q,
+                                              int col_Q, double* R, int row_R, int col_R)
 {
-  /*
-    This function calculates the optimal gain matrix K
-    such that the state-feedback law  u[n] = -Kx[n]  minimizes the
-    cost function
-
-          J = Sum {x'Qx + u'Ru}
-
-    subject to the state dynamics   x[n+1] = A*x[n] + B*u[n].
-
-    Also calculated are the
-    Riccati equation solution S and the closed-loop eigenvalues E:
-                                -1
-     A'SA - S - (A'SB+N)(R+B'SB) (B'SA+N') + Q = 0,   E = EIG(A-B*K).
-  */
-
   SciErr sciErr;
-  char* job;
 
-  /****** CALCULATION ******/
-  char variable_name_matrix_A[] = "A";
-  char variable_name_matrix_B[] = "B";
-  char variable_name_matrix_Q[] = "Q";
-  char variable_name_matrix_R[] = "R";
+  char var_A[] = "A";
+  char var_B[] = "B";
+  char var_Q[] = "Q";
+  char var_R[] = "R";
+  char var_K[] = "K";
+  char var_S[] = "S";
+  char var_E[] = "E";
 
-  // Matrix A
-  sciErr = createNamedMatrixOfDouble(pvApiCtx,variable_name_matrix_A,row_A,col_A, A); /* pvApiCtx is a global variable */
-  if(sciErr.iErr)
+  // Set input matrices
+  sciErr = createNamedMatrixOfDouble(pvApiCtx, var_A, row_A, col_A, A);
+  if (sciErr.iErr)
     printError(&sciErr, 0);
 
-  // Matrix B
-  sciErr = createNamedMatrixOfDouble(pvApiCtx,variable_name_matrix_B,row_B,col_B, B); /* pvApiCtx is a global variable */
-  if(sciErr.iErr)
+  sciErr = createNamedMatrixOfDouble(pvApiCtx, var_B, row_B, col_B, B);
+  if (sciErr.iErr)
     printError(&sciErr, 0);
 
-  // Matrix Q
-  sciErr = createNamedMatrixOfDouble(pvApiCtx,variable_name_matrix_Q,row_Q,col_Q, Q); /* pvApiCtx is a global variable */
-  if(sciErr.iErr)
+  sciErr = createNamedMatrixOfDouble(pvApiCtx, var_Q, row_Q, col_Q, Q);
+  if (sciErr.iErr)
     printError(&sciErr, 0);
 
-  // Matrix R
-  sciErr = createNamedMatrixOfDouble(pvApiCtx,variable_name_matrix_R,row_R,col_R, R); /* pvApiCtx is a global variable */
-  if(sciErr.iErr)
+  sciErr = createNamedMatrixOfDouble(pvApiCtx, var_R, row_R, col_R, R);
+  if (sciErr.iErr)
     printError(&sciErr, 0);
 
-  // Matrix b
-  job = "b = B / R * B'";
-  SendScilabJob(job);
+  // Execute Scilab commands
+  SendScilabJob(const_cast<char*>("b = B / R * B';"));
+  SendScilabJob(const_cast<char*>("S = riccati(A,b,Q,'d','eigen');"));
+  SendScilabJob(const_cast<char*>("K = inv(B'*S*B + R)*(B'*S*A);"));
+  SendScilabJob(const_cast<char*>("E = spec(A - B*K);"));
 
-  // Matrix S
-  job = "S = riccati(A,b,Q,'d','eigen')";
-  SendScilabJob(job);
-  //  SendScilabJob("disp(S);");
-
-  // Matrix K
-  job = "K = inv(B'*S*B+R)*(B'*S*A)";
-  SendScilabJob(job);
-  //  SendScilabJob("disp(K);");
-
-  // eigenvalues E
-  job = "E = spec(A-B*K)";
-  SendScilabJob(job);
-  //  SendScilabJob("disp(E);");
-
-  // Read Matrix K
   int row = 0, col = 0;
-  char variable_to_be_retrieved_K[] = "K";
 
-  sciErr = readNamedMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_K, &row, &col, NULL);
-  if(sciErr.iErr)
-    printError(&sciErr, 0);
-
-  K = (double *)realloc(K,(row*col)*sizeof(double));
-
-  sciErr = readNamedMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_K, &row, &col, K);
-  if(sciErr.iErr)
-    printError(&sciErr, 0);
-
+  // Get matrix K
+  sciErr = readNamedMatrixOfDouble(pvApiCtx, var_K, &row, &col, NULL);
+  K = (double*)malloc(sizeof(double) * row * col);
+  sciErr = readNamedMatrixOfDouble(pvApiCtx, var_K, &row, &col, K);
   *row_K = row;
   *col_K = col;
 
-  // Read Matrix S
-  char variable_to_be_retrieved_S[] = "S";
-
-  sciErr = readNamedMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_S, &row, &col, NULL);
-  if(sciErr.iErr)
-    printError(&sciErr, 0);
-
-  S = (double *)realloc(S,(row*col)*sizeof(double));
-
-  sciErr = readNamedMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_S, &row, &col, S);
-  if(sciErr.iErr)
-    printError(&sciErr, 0);
-
+  // Get matrix S
+  sciErr = readNamedMatrixOfDouble(pvApiCtx, var_S, &row, &col, NULL);
+  S = (double*)malloc(sizeof(double) * row * col);
+  sciErr = readNamedMatrixOfDouble(pvApiCtx, var_S, &row, &col, S);
   *row_S = row;
   *col_S = col;
 
-  // Read Matrix E
-  char variable_to_be_retrieved_E[] = "E";
-
-  sciErr = readNamedMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_E, &row, &col, NULL);
-  if(sciErr.iErr)
-    printError(&sciErr, 0);
-
-  E = (double *)realloc(E,(row*col)*sizeof(double));
-  E_img = (double *)realloc(E_img,(row*col)*sizeof(double));
-
-  sciErr = readNamedComplexMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_E, &row, &col, E, E_img);
-  if(sciErr.iErr)
-    printError(&sciErr, 0);
-
+  // Get eigenvalues E (complex)
+  sciErr = readNamedMatrixOfDouble(pvApiCtx, var_E, &row, &col, NULL);
+  E = (double*)malloc(sizeof(double) * row * col);
+  E_img = (double*)malloc(sizeof(double) * row * col);
+  sciErr = readNamedComplexMatrixOfDouble(pvApiCtx, var_E, &row, &col, E, E_img);
   *row_E = row;
   *col_E = col;
-
-  return;
 }
 
-
-}
+}  // namespace robotis_framework

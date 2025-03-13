@@ -34,26 +34,20 @@
  *  Created on: December 1, 2016
  *      Author: sch
  */
-
 #ifndef SCILAB_OPTIMIZATION_H
 #define SCILAB_OPTIMIZATION_H
 
 #include <ros/ros.h>
 
-#include <cmath>
-
-#include <stdio.h>
-
-// scilab
-#include <scilab/stack-c.h>
+// Scilab C API
 #include <scilab/call_scilab.h>
 #include <scilab/api_scilab.h>
-
-#define SCILIB_PATH "/usr/share/scilab"
+#include <scilab/Scierror.h>
+#include <string.h>
+#include <stdlib.h>
 
 namespace robotis_framework
 {
-
 class ScilabOptimization
 {
 public:
@@ -61,25 +55,13 @@ public:
   ~ScilabOptimization();
 
   static void initialize();
-  static void solveRiccatiEquation(double *K, int *row_K, int *colK,
-                                   double *S, int *rowS, int *colS,
-                                   double *E, double *E_img, int *rowE, int *colE,
-                                   double *A, int rowA,  int colA,
-                                   double *B, int rowB,  int colB,
-                                   double *Q, int rowQ,  int colQ,
-                                   double *R, int rowR,  int colR);
-
   static void terminate();
 
-private:
-
-
-
-
+  static void solveRiccatiEquation(double*& K, int* row_K, int* col_K, double*& S, int* row_S, int* col_S, double*& E,
+                                   double*& E_img, int* row_E, int* col_E, double* A, int row_A, int col_A, double* B,
+                                   int row_B, int col_B, double* Q, int row_Q, int col_Q, double* R, int row_R,
+                                   int col_R);
 };
+}  // namespace robotis_framework
 
-
-
-}
-
-#endif // SCILAB_OPTIMIZATION_H
+#endif  // SCILAB_OPTIMIZATION_H
