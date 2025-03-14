@@ -12,9 +12,9 @@ find_package(catkin REQUIRED COMPONENTS roscpp)
 # Catkin package configuration
 ################################################################################
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES scilab_optimization
-  CATKIN_DEPENDS roscpp
+  INCLUDE_DIRS include ${SCILAB_INCLUDE_DIR} # Export Scilab headers
+  LIBRARIES scilab_optimization # Export the library
+  CATKIN_DEPENDS roscpp # Declare ROS dependencies
 )
 
 ################################################################################
@@ -23,11 +23,10 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  ${SCILAB_INCLUDE_DIRS}
+  ${SCILAB_INCLUDE_DIR}
 )
 
-link_directories(${SCILAB_LIBRARY_DIRS})
-
+# Define SCILIB_PATH macro for use in source code
 add_definitions(-DSCILIB_PATH=\"${SCILIB_PATH}\")
 
 ################################################################################
@@ -48,7 +47,7 @@ target_link_libraries(
 )
 
 ################################################################################
-# Install
+# Installation
 ################################################################################
 install(
   TARGETS scilab_optimization
