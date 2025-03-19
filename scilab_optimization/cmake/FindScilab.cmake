@@ -4,8 +4,8 @@
 # This module defines:
 #  SCILAB_ROOT: Scilab installation path
 #  SCILAB_BINARY: Scilab binary path
-#  SCILAB_MEX_INCLUDE_DIR: include path for mex.h (used for libmex)
-#  SCILAB_CORE_INCLUDE_DIR: main headers
+#  SCILAB_MEX_INCLUDE_DIR: include path for mex.h (optional)
+#  SCILAB_CORE_INCLUDE_DIR: main headers (optional)
 #  SCILAB_MEX_LIBRARY: path to libmex.so (optional)
 #  SCILAB_MX_LIBRARY:  path to libmx.so (optional)
 #  SCILAB_SCICORE_LIBRARY: path to scicore (optional)
@@ -65,7 +65,6 @@ elseif(APPLE)
   set(SCILAB_BIN "scilab")
 
 else()
-  # Linux - supports Ubuntu 20.04 and 24.04
   set(SCILAB_PATHS
       "/usr/share/scilab"
       "/usr/local/share/scilab"
@@ -104,7 +103,6 @@ else()
     ${SCILAB_PATHS}
   )
 
-  # Prefer CLI version to avoid GUI dependency
   set(LIBSCILAB "scilab-cli")
   set(LIBSCICORE "scicore")
   set(LIBMEX "libmex.so")
@@ -112,22 +110,17 @@ else()
   set(SCILAB_BIN "scilab-cli")
 endif()
 
-# Binary
 find_program(
   SCILAB_BINARY
   ${SCILAB_BIN}
   ${SCILAB_BINARY_PATHS}
 )
-
-# Required main Scilab library
 find_library(
   SCILAB_SCILAB_LIBRARY
   ${LIBSCILAB}
   ${SCILAB_LIBRARIES_PATHS}
   NO_DEFAULT_PATH
 )
-
-# Optional libraries
 find_library(
   SCILAB_SCICORE_LIBRARY
   ${LIBSCICORE}
@@ -146,42 +139,36 @@ find_library(
   ${SCILAB_LIBRARIES_PATHS}
   NO_DEFAULT_PATH
 )
-
 find_library(
   SCILAB_CALL_SCILAB_LIBRARY
   NAMES scicall_scilab
   PATHS ${SCILAB_LIBRARIES_PATHS}
   NO_DEFAULT_PATH
 )
-
 find_library(
   SCILAB_CLI_LIBRARY
   NAMES scilab-cli
   PATHS ${SCILAB_LIBRARIES_PATHS}
   NO_DEFAULT_PATH
 )
-
 find_library(
   SCILAB_COMPLETION_LIBRARY
   NAMES scicompletion
   PATHS ${SCILAB_LIBRARIES_PATHS}
   NO_DEFAULT_PATH
 )
-
 find_library(
   SCILAB_COMMONS_LIBRARY
   NAMES scicommons
   PATHS ${SCILAB_LIBRARIES_PATHS}
   NO_DEFAULT_PATH
 )
-
 find_library(
   SCILAB_LOCALIZATION_LIBRARY
   NAMES scilocalization
   PATHS ${SCILAB_LIBRARIES_PATHS}
   NO_DEFAULT_PATH
 )
-
 find_library(
   SCILAB_CONSOLE_MINIMAL_LIBRARY
   NAMES sciconsole-minimal
@@ -189,7 +176,6 @@ find_library(
   NO_DEFAULT_PATH
 )
 
-# Include headers
 find_path(
   SCILAB_MEX_INCLUDE_DIR
   "mex.h"
@@ -205,112 +191,82 @@ find_path(
   NO_DEFAULT_PATH
 )
 
-# Compose SCILAB_LIBRARIES list
 set(SCILAB_LIBRARIES ${SCILAB_SCILAB_LIBRARY})
-
 if(SCILAB_SCICORE_LIBRARY)
   list(
     APPEND
     SCILAB_LIBRARIES
     ${SCILAB_SCICORE_LIBRARY}
   )
-else()
-  message(WARNING "Scilab optional library 'scicore' not found.")
 endif()
-
 if(SCILAB_MEX_LIBRARY)
   list(
     APPEND
     SCILAB_LIBRARIES
     ${SCILAB_MEX_LIBRARY}
   )
-else()
-  message(WARNING "Scilab optional library 'libmex.so' not found.")
 endif()
-
 if(SCILAB_MX_LIBRARY)
   list(
     APPEND
     SCILAB_LIBRARIES
     ${SCILAB_MX_LIBRARY}
   )
-else()
-  message(WARNING "Scilab optional library 'libmx.so' not found.")
 endif()
-
 if(SCILAB_CALL_SCILAB_LIBRARY)
   list(
     APPEND
     SCILAB_LIBRARIES
     ${SCILAB_CALL_SCILAB_LIBRARY}
   )
-else()
-  message(FATAL_ERROR "Scilab required library 'scicall_scilab' not found.")
 endif()
-
 if(SCILAB_CLI_LIBRARY)
   list(
     APPEND
     SCILAB_LIBRARIES
     ${SCILAB_CLI_LIBRARY}
   )
-else()
-  message(FATAL_ERROR "Scilab required library 'scilab-cli' not found.")
 endif()
-
 if(SCILAB_COMPLETION_LIBRARY)
   list(
     APPEND
     SCILAB_LIBRARIES
     ${SCILAB_COMPLETION_LIBRARY}
   )
-else()
-  message(FATAL_ERROR "Scilab required library 'scicompletion' not found.")
 endif()
-
 if(SCILAB_COMMONS_LIBRARY)
   list(
     APPEND
     SCILAB_LIBRARIES
     ${SCILAB_COMMONS_LIBRARY}
   )
-else()
-  message(FATAL_ERROR "Scilab required library 'scicommons-cli' not found.")
 endif()
-
 if(SCILAB_LOCALIZATION_LIBRARY)
   list(
     APPEND
     SCILAB_LIBRARIES
     ${SCILAB_LOCALIZATION_LIBRARY}
   )
-else()
-  message(FATAL_ERROR "Scilab required library 'scilocalization' not found.")
 endif()
-
 if(SCILAB_CONSOLE_MINIMAL_LIBRARY)
   list(
     APPEND
     SCILAB_LIBRARIES
     ${SCILAB_CONSOLE_MINIMAL_LIBRARY}
   )
-else()
-  message(FATAL_ERROR "Scilab required library 'sciconsole-minimal' not found.")
 endif()
 
-# Final check (do not require optional libs)
 if(SCILAB_ROOT)
   include(FindPackageHandleStandardArgs)
   find_package_handle_standard_args(
     Scilab
-    DEFAULT_MSG
-    SCILAB_ROOT
-    SCILAB_BINARY
-    SCILAB_SCILAB_LIBRARY
+    REQUIRED_VARS
+      SCILAB_ROOT
+      SCILAB_BINARY
+      SCILAB_SCILAB_LIBRARY
   )
 endif()
 
-# Hide from cmake-gui
 mark_as_advanced(
   SCILAB_SCILAB_LIBRARY
   SCILAB_SCICORE_LIBRARY
