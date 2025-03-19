@@ -91,6 +91,8 @@ _find_optional_lib(SCILAB_CLI_LIBRARY scilab-cli)
 _find_optional_lib(SCILAB_MEX_LIBRARY mex)
 _find_optional_lib(SCILAB_MX_LIBRARY mx)
 _find_optional_lib(SCILAB_SCICORE_LIBRARY scicore)
+_find_optional_lib(SCILAB_XML_LIBRARY scixml)
+_find_optional_lib(SCILAB_EXTERNAL_OBJECTS_LIBRARY sciexternal_objects)
 
 # 正しいリンク順序でライブラリを構成
 set(SCILAB_LIBRARIES "")
@@ -102,7 +104,11 @@ foreach(
   SCILAB_COMMONS_LIBRARY
   SCILAB_LOCALIZATION_LIBRARY
   SCILAB_CLI_LIBRARY
-  SCILAB_SCILAB_LIBRARY
+  SCILAB_MEX_LIBRARY
+  SCILAB_MX_LIBRARY
+  SCILAB_SCICORE_LIBRARY
+  SCILAB_XML_LIBRARY
+  SCILAB_EXTERNAL_OBJECTS_LIBRARY
 )
   if(${lib})
     list(
