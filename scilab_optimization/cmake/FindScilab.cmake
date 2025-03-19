@@ -19,6 +19,7 @@ if(SCILAB_ROOT AND SCILAB_LIBRARIES)
   set(Scilab_FIND_QUIETLY TRUE)
 endif()
 
+# platform-specific paths
 if(WIN32)
   get_filename_component(
     SCILAB_VER
@@ -121,74 +122,35 @@ find_library(
   ${SCILAB_LIBRARIES_PATHS}
   NO_DEFAULT_PATH
 )
-find_library(
-  SCILAB_SCICORE_LIBRARY
-  ${LIBSCICORE}
-  ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
-)
-find_library(
-  SCILAB_MEX_LIBRARY
-  ${LIBMEX}
-  ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
-)
-find_library(
-  SCILAB_MX_LIBRARY
-  ${LIBMX}
-  ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
-)
-find_library(
-  SCILAB_CALL_SCILAB_LIBRARY
-  NAMES scicall_scilab
-  PATHS ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
-)
-find_library(
-  SCILAB_CLI_LIBRARY
-  NAMES scilab-cli
-  PATHS ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
-)
-find_library(
-  SCILAB_COMPLETION_LIBRARY
-  NAMES scicompletion
-  PATHS ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
-)
-find_library(
-  SCILAB_COMMONS_LIBRARY
-  NAMES scicommons
-  PATHS ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
-)
-find_library(
-  SCILAB_LOCALIZATION_LIBRARY
-  NAMES scilocalization
-  PATHS ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
-)
-find_library(
-  SCILAB_CONSOLE_MINIMAL_LIBRARY
-  NAMES sciconsole-minimal
-  PATHS ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
-)
 
-find_library(
-  SCILAB_API_LIBRARY
-  NAMES sciapi
-  PATHS ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
+# Optional libraries (linked in order)
+macro(
+  _find_optional_lib
+  var
+  name
 )
+  find_library(
+    ${var}
+    NAMES ${name}
+    PATHS ${SCILAB_LIBRARIES_PATHS}
+    NO_DEFAULT_PATH
+  )
+  if(NOT ${var})
+    message(WARNING "Optional Scilab library '${name}' not found.")
+  endif()
+endmacro()
 
-find_library(
-  SCILAB_TYPES_LIBRARY
-  NAMES scitypes
-  PATHS ${SCILAB_LIBRARIES_PATHS}
-  NO_DEFAULT_PATH
-)
+_find_optional_lib(SCILAB_CALL_SCILAB_LIBRARY scicall_scilab)
+_find_optional_lib(SCILAB_CONSOLE_MINIMAL_LIBRARY sciconsole-minimal)
+_find_optional_lib(SCILAB_COMPLETION_LIBRARY scicompletion)
+_find_optional_lib(SCILAB_COMMONS_LIBRARY scicommons)
+_find_optional_lib(SCILAB_LOCALIZATION_LIBRARY scilocalization)
+_find_optional_lib(SCILAB_CLI_LIBRARY scilab-cli)
+_find_optional_lib(SCILAB_MEX_LIBRARY ${LIBMEX})
+_find_optional_lib(SCILAB_MX_LIBRARY ${LIBMX})
+_find_optional_lib(SCILAB_SCICORE_LIBRARY ${LIBSCICORE})
+_find_optional_lib(SCILAB_API_LIBRARY sciapi)
+_find_optional_lib(SCILAB_TYPES_LIBRARY scitypes)
 
 find_path(
   SCILAB_MEX_INCLUDE_DIR
@@ -205,84 +167,30 @@ find_path(
   NO_DEFAULT_PATH
 )
 
+# Compose SCILAB_LIBRARIES
 set(SCILAB_LIBRARIES ${SCILAB_SCILAB_LIBRARY})
-if(SCILAB_SCICORE_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_SCICORE_LIBRARY}
-  )
-endif()
-if(SCILAB_MEX_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_MEX_LIBRARY}
-  )
-endif()
-if(SCILAB_MX_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_MX_LIBRARY}
-  )
-endif()
-if(SCILAB_CALL_SCILAB_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_CALL_SCILAB_LIBRARY}
-  )
-endif()
-if(SCILAB_CLI_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_CLI_LIBRARY}
-  )
-endif()
-if(SCILAB_COMPLETION_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_COMPLETION_LIBRARY}
-  )
-endif()
-if(SCILAB_COMMONS_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_COMMONS_LIBRARY}
-  )
-endif()
-if(SCILAB_LOCALIZATION_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_LOCALIZATION_LIBRARY}
-  )
-endif()
-if(SCILAB_CONSOLE_MINIMAL_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_CONSOLE_MINIMAL_LIBRARY}
-  )
-endif()
-if(SCILAB_API_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_API_LIBRARY}
-  )
-endif()
-if(SCILAB_TYPES_LIBRARY)
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    ${SCILAB_TYPES_LIBRARY}
-  )
-endif()
+foreach(
+  lib
+  SCILAB_CALL_SCILAB_LIBRARY
+  SCILAB_CONSOLE_MINIMAL_LIBRARY
+  SCILAB_COMPLETION_LIBRARY
+  SCILAB_COMMONS_LIBRARY
+  SCILAB_LOCALIZATION_LIBRARY
+  SCILAB_CLI_LIBRARY
+  SCILAB_MEX_LIBRARY
+  SCILAB_MX_LIBRARY
+  SCILAB_SCICORE_LIBRARY
+  SCILAB_API_LIBRARY
+  SCILAB_TYPES_LIBRARY
+)
+  if(${lib})
+    list(
+      APPEND
+      SCILAB_LIBRARIES
+      ${${lib}}
+    )
+  endif()
+endforeach()
 
 if(SCILAB_ROOT)
   include(FindPackageHandleStandardArgs)
