@@ -1,125 +1,180 @@
-# FindScilab.cmake - Minimal Scilab detection module for ROS/Linux (CLI only)
+# - Try to find a version of Scilab and headers/library required by the 
+#   used compiler.
+#
+# This module defines: 
+#  SCILAB_ROOT: Scilab installation path
+#  SCILAB_BINARY: Scilab binary path
+#  SCILAB_MEX_INCLUDE_DIR: include path for mex.h (used for libmex)
+#  SCILAB_CORE_INCLUDE_DIR: main headers
+#  SCILAB_MEX_LIBRARY: path to libmex.so (optional)
+#  SCILAB_MX_LIBRARY:  path to libmx.so (optional)
+#  SCILAB_SCICORE_LIBRARY: path to scicore (optional)
+#  SCILAB_LIBRARIES:   list of required and optional libraries
+#
+# Copyright (c) 2009 Arnaud Barré <arnaud.barre@gmail.com>
+# Redistribution and use is allowed according to the terms of the BSD license.
+# For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
-# === Search paths ===
-set(_SCILAB_SEARCH_INCLUDE_PATHS /usr/include /usr/local/include)
-set(_SCILAB_SEARCH_SHARE_PATHS /usr/share/scilab /usr/local/share/scilab)
-set(_SCILAB_SEARCH_LIB_PATHS /usr/lib/scilab /usr/local/lib/scilab)
+IF(SCILAB_ROOT AND SCILAB_LIBRARIES)
+   SET(Scilab_FIND_QUIETLY TRUE)
+ENDIF()
 
-# === Find include directory ===
-find_path(
-  SCILAB_INCLUDE_DIR
-  NAMES scilab/api_scilab.h
-  PATHS ${_SCILAB_SEARCH_INCLUDE_PATHS}
-)
+IF(WIN32)
+  GET_FILENAME_COMPONENT(SCILAB_VER  "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scilab;LASTINSTALL]" NAME)
+  FIND_PATH(SCILAB_ROOT "etc/scilab.start" "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Scilab\\${SCILAB_VER};SCIPATH]")
+  SET(SCILAB_MODULE_PATHS "${SCILAB_ROOT}/modules")
+  SET(SCILAB_LIBRARIES_PATHS "${SCILAB_ROOT}/bin")
+  SET(SCILAB_MODULES_MEXLIB_PATHS "${SCILAB_MODULE_PATHS}/mexlib/includes")
+  SET(SCILAB_MODULES_CORE_PATHS "${SCILAB_MODULE_PATHS}/core/includes")
+  SET(SCILAB_BINARY_PATHS "${SCILAB_ROOT}/bin")
+  SET(LIBMEX "libmex.dll")
+  SET(LIBMX "libmx.dll")
+  SET(LIBSCILAB "LibScilab")
+  SET(LIBSCICORE "")
+  SET(SCILAB_BIN "Scilex")
+  SET(SCILAB_SCICORE_LIBRARY "NOTUSED")
 
-# === Find shared data path ===
-find_path(
-  SCILIB_PATH
-  NAMES etc/scilab.start
-  PATHS ${_SCILAB_SEARCH_SHARE_PATHS}
-)
+ELSEIF(APPLE)
+  FILE(GLOB SCILAB_PATHS "/Applications/Scilab*")
+  FIND_PATH(SCILAB_ROOT "Contents/MacOS/share/scilab/etc/scilab.start" ${SCILAB_PATHS})
+  SET(SCILAB_MODULE_PATHS "${SCILAB_ROOT}/Contents/MacOS/share/scilab/modules")
+  SET(SCILAB_LIBRARIES_PATHS "${SCILAB_ROOT}/Contents/MacOS/lib/scilab")
+  SET(SCILAB_MODULES_MEXLIB_PATHS "${SCILAB_ROOT}/Contents/MacOS/include/scilab")
+  SET(SCILAB_MODULES_CORE_PATHS "${SCILAB_ROOT}/Contents/MacOS/include/scilab")
+  SET(SCILAB_BINARY_PATHS "${SCILAB_ROOT}/Contents/MacOS/bin")
+  SET(LIBMEX "libmex.dylib")
+  SET(LIBMX "libmx.dylib")
+  SET(LIBSCILAB "scilab")
+  SET(LIBSCICORE "scicore")
+  SET(SCILAB_BIN "scilab")
 
-# === Find actual library directory (representative .so file) ===
-find_path(
-  SCILAB_LIBRARY_DIR
-  NAMES libscilab.so
-  PATHS ${_SCILAB_SEARCH_LIB_PATHS}
-)
-
-# === Find core libraries ===
-find_library(
-  SCILAB_CORE_LIBRARY
-  NAMES scilab-cli
-  PATHS ${_SCILAB_SEARCH_LIB_PATHS}
-)
-
-find_library(
-  SCILAB_CALL_SCILAB_LIBRARY
-  NAMES scicall_scilab
-  PATHS ${_SCILAB_SEARCH_LIB_PATHS}
-)
-
-# === List of additional Scilab libraries ===
-set(_SCILAB_REQUIRED_LIBS
-    libsciaction_binding-disable.so
-    libsciaction_binding.so
-    libsciarnoldi.so
-    libscicall_scilab.so
-    libscicommons-disable.so
-    libscicommons.so
-    libscicompletion.so
-    libsciconsole-minimal.so
-    libsciexternal_objects.so
-    libsciexternal_objects_java.so
-    libscifunctions.so
-    libscihelptools.so
-    libscihdf5.so
-    libscihistory_browser-disable.so
-    libscihistory_browser.so
-    libscihistory_manager.so
-    libscigraphic_export-disable.so
-    libscigraphic_export.so
-    libscigraphic_objects-disable.so
-    libscigraphics-disable.so
-    libscigraphics.so
-    libscigui-disable.so
-    libscigui.so
-    libsciinterpolation.so
-    libscijvm-disable.so
-    libscilab-cli.so
-    libscilab.so
-    libscilocalization.so
-    libscimatio.so
-    libsciparallel.so
-    libscipreferences-cli.so
-    libscirandlib.so
-    libscirenderer.so
-    libsciscicos-cli.so
-    libsciscicos.so
-    libsciscicos_blocks-cli.so
-    libsciscinotes-disable.so
-    libsciscinotes.so
-    libscisignal_processing.so
-    libscisound.so
-    libscispecial_functions.so
-    libscispreadsheet.so
-    libscisundials.so
-    libscistatistics.so
-    libscitclsci.so
-    libsciumfpack.so
-    libsciui_data-disable.so
-    libsciui_data.so
-    libscixcos-disable.so
-    libscixcos.so
-    libscixml.so
-)
-
-# === Collect full paths of libraries ===
-set(SCILAB_LIBRARIES ${SCILAB_CORE_LIBRARY} ${SCILAB_CALL_SCILAB_LIBRARY})
-
-foreach(_lib ${_SCILAB_REQUIRED_LIBS})
-  list(
-    APPEND
-    SCILAB_LIBRARIES
-    "${SCILAB_LIBRARY_DIR}/${_lib}"
+ELSE()
+  # Linux - supports Ubuntu 20.04 and 24.04
+  SET(SCILAB_PATHS 
+    "/usr/share/scilab"
+    "/usr/local/share/scilab"
+    "/opt/local/share/scilab"
   )
-endforeach()
+  SET(SCILAB_MODULE_PATHS 
+    "/usr/include/scilab"
+    "/usr/local/include/scilab"
+    "/opt/local/include/scilab"
+  )
+  SET(SCILAB_LIBRARIES_PATHS
+    "/usr/lib/x86_64-linux-gnu/scilab"
+    "/usr/lib/scilab"
+    "/usr/local/lib/scilab"
+    "/opt/local/lib/scilab"
+  )
+  SET(SCILAB_MODULES_MEXLIB_PATHS 
+    "/usr/include/scilab/mexlib"
+    "/usr/local/include/scilab/mexlib"
+    "/opt/local/include/scilab/mexlib"
+  )
+  SET(SCILAB_MODULES_CORE_PATHS
+    "/usr/include/scilab/core"
+    "/usr/local/include/scilab/core"
+    "/opt/local/include/scilab/core"
+  )
+  SET(SCILAB_BINARY_PATHS
+    "/usr/bin"
+    "/usr/local/bin"
+    "/opt/local/bin"
+  )
 
-# === Find and validate ===
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(
-  Scilab
-  REQUIRED_VARS
-    SCILAB_INCLUDE_DIR
-    SCILIB_PATH
-    SCILAB_LIBRARY_DIR
-    SCILAB_LIBRARIES
+  FIND_PATH(SCILAB_ROOT "etc/scilab.start" ${SCILAB_PATHS})
+
+  # Prefer CLI version to avoid GUI dependency
+  SET(LIBSCILAB "scilab-cli")
+  SET(LIBSCICORE "scicore")
+  SET(LIBMEX "libmex.so")
+  SET(LIBMX "libmx.so")
+  SET(SCILAB_BIN "scilab-cli")
+ENDIF()
+
+# Binary
+FIND_PROGRAM(SCILAB_BINARY
+  ${SCILAB_BIN}
+  ${SCILAB_BINARY_PATHS}
 )
 
-# === Mark as advanced (to hide from GUIs like ccmake) ===
-mark_as_advanced(
-  SCILAB_INCLUDE_DIR
-  SCILIB_PATH
-  SCILAB_LIBRARY_DIR
+# Required main Scilab library
+FIND_LIBRARY(SCILAB_SCILAB_LIBRARY
+  ${LIBSCILAB}
+  ${SCILAB_LIBRARIES_PATHS} NO_DEFAULT_PATH
+)
+
+# Optional libraries
+FIND_LIBRARY(SCILAB_SCICORE_LIBRARY
+  ${LIBSCICORE}
+  ${SCILAB_LIBRARIES_PATHS} NO_DEFAULT_PATH
+)
+FIND_LIBRARY(SCILAB_MEX_LIBRARY
+  ${LIBMEX}
+  ${SCILAB_LIBRARIES_PATHS} NO_DEFAULT_PATH
+)
+FIND_LIBRARY(SCILAB_MX_LIBRARY
+  ${LIBMX}
+  ${SCILAB_LIBRARIES_PATHS} NO_DEFAULT_PATH
+)
+
+# Include headers
+FIND_PATH(SCILAB_MEX_INCLUDE_DIR
+  "mex.h"
+  ${SCILAB_MODULES_MEXLIB_PATHS}
+  "${SCILAB_MODULES_MEXLIB_PATHS}/mexlib"
+  NO_DEFAULT_PATH
+)
+FIND_PATH(SCILAB_CORE_INCLUDE_DIR
+  "core_math.h"
+  ${SCILAB_MODULES_CORE_PATHS}
+  "${SCILAB_MODULES_CORE_PATHS}/core"
+  NO_DEFAULT_PATH
+)
+
+# Compose SCILAB_LIBRARIES list
+SET(SCILAB_LIBRARIES
+  ${SCILAB_SCILAB_LIBRARY}
+)
+
+IF(SCILAB_SCICORE_LIBRARY)
+  LIST(APPEND SCILAB_LIBRARIES ${SCILAB_SCICORE_LIBRARY})
+ELSE()
+  MESSAGE(WARNING "Scilab optional library 'scicore' not found.")
+ENDIF()
+
+IF(SCILAB_MEX_LIBRARY)
+  LIST(APPEND SCILAB_LIBRARIES ${SCILAB_MEX_LIBRARY})
+ELSE()
+  MESSAGE(WARNING "Scilab optional library 'libmex.so' not found.")
+ENDIF()
+
+IF(SCILAB_MX_LIBRARY)
+  LIST(APPEND SCILAB_LIBRARIES ${SCILAB_MX_LIBRARY})
+ELSE()
+  MESSAGE(WARNING "Scilab optional library 'libmx.so' not found.")
+ENDIF()
+
+# Final check (do not require optional libs)
+IF(SCILAB_ROOT)
+  INCLUDE(FindPackageHandleStandardArgs)
+  FIND_PACKAGE_HANDLE_STANDARD_ARGS(Scilab DEFAULT_MSG
+    SCILAB_ROOT
+    SCILAB_BINARY
+    SCILAB_MEX_INCLUDE_DIR
+    SCILAB_CORE_INCLUDE_DIR
+    SCILAB_SCILAB_LIBRARY
+  )
+ENDIF()
+
+# Hide from cmake-gui
+MARK_AS_ADVANCED(
+  SCILAB_SCILAB_LIBRARY
+  SCILAB_SCICORE_LIBRARY
+  SCILAB_MEX_LIBRARY
+  SCILAB_MX_LIBRARY
   SCILAB_LIBRARIES
+  SCILAB_MEX_INCLUDE_DIR
+  SCILAB_CORE_INCLUDE_DIR
+  SCILAB_BINARY
 )
