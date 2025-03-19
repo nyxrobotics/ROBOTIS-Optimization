@@ -93,6 +93,8 @@ _find_optional_lib(SCILAB_MX_LIBRARY mx)
 _find_optional_lib(SCILAB_SCICORE_LIBRARY scicore)
 _find_optional_lib(SCILAB_XML_LIBRARY scixml)
 _find_optional_lib(SCILAB_EXTERNAL_OBJECTS_LIBRARY sciexternal_objects)
+_find_optional_lib(SCILAB_GRAPHICS_LIBRARY scigraphics)
+_find_optional_lib(SCILAB_GRAPHIC_OBJECTS_LIBRARY scigraphic_objects)
 
 # 正しいリンク順序でライブラリを構成
 set(SCILAB_LIBRARIES "")
@@ -109,6 +111,8 @@ foreach(
   SCILAB_SCICORE_LIBRARY
   SCILAB_XML_LIBRARY
   SCILAB_EXTERNAL_OBJECTS_LIBRARY
+  SCILAB_GRAPHICS_LIBRARY
+  SCILAB_GRAPHIC_OBJECTS_LIBRARY
 )
   if(${lib})
     list(
