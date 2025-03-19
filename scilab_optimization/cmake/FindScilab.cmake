@@ -149,8 +149,6 @@ _find_optional_lib(SCILAB_CLI_LIBRARY scilab-cli)
 _find_optional_lib(SCILAB_MEX_LIBRARY ${LIBMEX})
 _find_optional_lib(SCILAB_MX_LIBRARY ${LIBMX})
 _find_optional_lib(SCILAB_SCICORE_LIBRARY ${LIBSCICORE})
-_find_optional_lib(SCILAB_API_LIBRARY sciapi)
-_find_optional_lib(SCILAB_TYPES_LIBRARY scitypes)
 
 find_path(
   SCILAB_MEX_INCLUDE_DIR
@@ -208,6 +206,8 @@ mark_as_advanced(
   SCILAB_SCICORE_LIBRARY
   SCILAB_MEX_LIBRARY
   SCILAB_MX_LIBRARY
-  SCILAB_LIBRARIES
   SCILAB_BINARY
+  SCILAB_LIBRARIES
+  SCILAB_MEX_INCLUDE_DIR
+  SCILAB_CORE_INCLUDE_DIR
 )
