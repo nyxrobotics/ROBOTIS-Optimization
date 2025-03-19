@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp)
 ################################################################################
 catkin_package(
   INCLUDE_DIRS include ${SCILAB_INCLUDE_DIR} # Export Scilab headers
-  LIBRARIES scilab_optimization # Export the library
+  LIBRARIES scilab_optimization ${SCILAB_LIBRARIES} # Export the library
   CATKIN_DEPENDS roscpp # Declare ROS dependencies
 )
 
