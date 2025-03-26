@@ -39,17 +39,11 @@
 #define SCILAB_OPTIMIZATION_H
 
 #include <ros/ros.h>
-
 #include <cmath>
 
-#include <stdio.h>
-
 // scilab
-#include <scilab/stack-c.h>
 #include <scilab/call_scilab.h>
 #include <scilab/api_scilab.h>
-
-#define SCILIB_PATH "/usr/share/scilab"
 
 namespace robotis_framework
 {

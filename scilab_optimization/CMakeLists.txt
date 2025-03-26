@@ -29,6 +29,9 @@ catkin_package(
 # Build
 ################################################################################
 
+# Define SCILIB_PATH macro for use in source code
+add_definitions(-DSCILIB_PATH=\"${SCILAB_ROOT}\")
+
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
