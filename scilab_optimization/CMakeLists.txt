@@ -4,9 +4,7 @@ project(scilab_optimization)
 ################################################################################
 # Packages
 ################################################################################
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-)
+find_package(catkin REQUIRED COMPONENTS roscpp)
 
 ################################################################################
 # Declare ROS messages, services and actions
@@ -28,22 +26,20 @@ catkin_package(
 ################################################################################
 # Build
 ################################################################################
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
+include_directories(include ${catkin_INCLUDE_DIRS})
+
+link_directories(/usr/lib/scilab)
+
+add_library(scilab_optimization src/scilab_optimization.cpp)
+
+add_dependencies(
+  scilab_optimization
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
 )
 
-link_directories(
-  /usr/lib/scilab
-)
-
-add_library(scilab_optimization
-   src/scilab_optimization.cpp
-)
-
-add_dependencies(scilab_optimization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-
-target_link_libraries(scilab_optimization
+target_link_libraries(
+  scilab_optimization
   /usr/lib/scilab/libsciui_data.so
   /usr/lib/scilab/libsciumfpack.so
   /usr/lib/scilab/libsciscicos-cli.so
@@ -109,13 +105,15 @@ target_link_libraries(scilab_optimization
 ################################################################################
 # Install
 ################################################################################
-install(TARGETS scilab_optimization
+install(
+  TARGETS scilab_optimization
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(DIRECTORY include/${PROJECT_NAME}/
+install(
+  DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 

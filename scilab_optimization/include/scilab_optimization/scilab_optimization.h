@@ -53,7 +53,6 @@
 
 namespace robotis_framework
 {
-
 class ScilabOptimization
 {
 public:
@@ -61,25 +60,15 @@ public:
   ~ScilabOptimization();
 
   static void initialize();
-  static void solveRiccatiEquation(double *K, int *row_K, int *colK,
-                                   double *S, int *rowS, int *colS,
-                                   double *E, double *E_img, int *rowE, int *colE,
-                                   double *A, int rowA,  int colA,
-                                   double *B, int rowB,  int colB,
-                                   double *Q, int rowQ,  int colQ,
-                                   double *R, int rowR,  int colR);
+  static void solveRiccatiEquation(double* K, int* row_K, int* colK, double* S, int* rowS, int* colS, double* E,
+                                   double* E_img, int* rowE, int* colE, double* A, int rowA, int colA, double* B,
+                                   int rowB, int colB, double* Q, int rowQ, int colQ, double* R, int rowR, int colR);
 
   static void terminate();
 
 private:
-
-
-
-
 };
 
+}  // namespace robotis_framework
 
-
-}
-
-#endif // SCILAB_OPTIMIZATION_H
+#endif  // SCILAB_OPTIMIZATION_H
