@@ -52,7 +52,7 @@ void ScilabOptimization::initialize()
 #ifdef _MSC_VER
   if (StartScilab(NULL, NULL, NULL) == FALSE)
 #else
-  if (StartScilab(SCILIB_PATH, NULL, NULL) == FALSE)
+  if (StartScilab(const_cast<char*>(SCILIB_PATH), NULL, NULL) == FALSE)
 #endif
   {
     ROS_WARN("Error while calling StartScilab");
@@ -99,26 +99,22 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   char variable_name_matrix_R[] = "R";
 
   // Matrix A
-  sciErr =
-      createNamedMatrixOfDouble(pvApiCtx, variable_name_matrix_A, row_A, col_A, A); /* pvApiCtx is a global variable */
+  sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_A, row_A, col_A, A);
   if (sciErr.iErr)
     printError(&sciErr, 0);
 
   // Matrix B
-  sciErr =
-      createNamedMatrixOfDouble(pvApiCtx, variable_name_matrix_B, row_B, col_B, B); /* pvApiCtx is a global variable */
+  sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_B, row_B, col_B, B);
   if (sciErr.iErr)
     printError(&sciErr, 0);
 
   // Matrix Q
-  sciErr =
-      createNamedMatrixOfDouble(pvApiCtx, variable_name_matrix_Q, row_Q, col_Q, Q); /* pvApiCtx is a global variable */
+  sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_Q, row_Q, col_Q, Q);
   if (sciErr.iErr)
     printError(&sciErr, 0);
 
   // Matrix R
-  sciErr =
-      createNamedMatrixOfDouble(pvApiCtx, variable_name_matrix_R, row_R, col_R, R); /* pvApiCtx is a global variable */
+  sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_R, row_R, col_R, R);
   if (sciErr.iErr)
     printError(&sciErr, 0);
 
@@ -145,13 +141,13 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   int row = 0, col = 0;
   char variable_to_be_retrieved_K[] = "K";
 
-  sciErr = readNamedMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_K, &row, &col, NULL);
+  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_K, &row, &col, NULL);
   if (sciErr.iErr)
     printError(&sciErr, 0);
 
   K = (double*)realloc(K, (row * col) * sizeof(double));
 
-  sciErr = readNamedMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_K, &row, &col, K);
+  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_K, &row, &col, K);
   if (sciErr.iErr)
     printError(&sciErr, 0);
 
@@ -161,13 +157,13 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   // Read Matrix S
   char variable_to_be_retrieved_S[] = "S";
 
-  sciErr = readNamedMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_S, &row, &col, NULL);
+  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_S, &row, &col, NULL);
   if (sciErr.iErr)
     printError(&sciErr, 0);
 
   S = (double*)realloc(S, (row * col) * sizeof(double));
 
-  sciErr = readNamedMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_S, &row, &col, S);
+  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_S, &row, &col, S);
   if (sciErr.iErr)
     printError(&sciErr, 0);
 
@@ -177,14 +173,14 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   // Read Matrix E
   char variable_to_be_retrieved_E[] = "E";
 
-  sciErr = readNamedMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_E, &row, &col, NULL);
+  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_E, &row, &col, NULL);
   if (sciErr.iErr)
     printError(&sciErr, 0);
 
   E = (double*)realloc(E, (row * col) * sizeof(double));
   E_img = (double*)realloc(E_img, (row * col) * sizeof(double));
 
-  sciErr = readNamedComplexMatrixOfDouble(pvApiCtx, variable_to_be_retrieved_E, &row, &col, E, E_img);
+  sciErr = readNamedComplexMatrixOfDouble(nullptr, variable_to_be_retrieved_E, &row, &col, E, E_img);
   if (sciErr.iErr)
     printError(&sciErr, 0);
 
