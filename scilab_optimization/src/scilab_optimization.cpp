@@ -90,7 +90,6 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   */
 
   SciErr sciErr;
-  char* job;
 
   /****** CALCULATION ******/
   char variable_name_matrix_A[] = "A";
@@ -119,23 +118,19 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
     printError(&sciErr, 0);
 
   // Matrix b
-  job = "b = B / R * B'";
-  SendScilabJob(job);
+  SendScilabJob(const_cast<char*>("b = B / R * B'"));
 
   // Matrix S
-  job = "S = riccati(A,b,Q,'d','eigen')";
-  SendScilabJob(job);
-  //  SendScilabJob("disp(S);");
+  SendScilabJob(const_cast<char*>("S = riccati(A,b,Q,'d','eigen')"));
+  // SendScilabJob(const_cast<char*>("disp(S);"));
 
   // Matrix K
-  job = "K = inv(B'*S*B+R)*(B'*S*A)";
-  SendScilabJob(job);
-  //  SendScilabJob("disp(K);");
+  SendScilabJob(const_cast<char*>("K = inv(B '*S*B+R)*(B' * S * A)"));
+  // SendScilabJob(const_cast<char*>("disp(K);"));
 
   // eigenvalues E
-  job = "E = spec(A-B*K)";
-  SendScilabJob(job);
-  //  SendScilabJob("disp(E);");
+  SendScilabJob(const_cast<char*>("E = spec(A-B*K)"));
+  // SendScilabJob(const_cast<char*>("disp(E);"));
 
   // Read Matrix K
   int row = 0, col = 0;
