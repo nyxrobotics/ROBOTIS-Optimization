@@ -1,17 +1,23 @@
-# - Try to find a version of Scilab and headers/library required by the
-#   used compiler.
+#------------------------------------------------------------------------------
+# Find a compatible Scilab installation with the necessary headers and libraries.
 #
-# This module defines:
-#  SCILAB_ROOT: Scilab installation path
-#  SCILAB_BINARY: Scilab binary path
-#  SCILAB_LIBRARIES: list of required and optional libraries
+# This module locates Scilab's root directory, binary, and libraries required
+# for linking, including both mandatory and optional components.
 #
-# Copyright (c) 2009 Arnaud Barré <arnaud.barre@gmail.com>
-# Redistribution and use is allowed according to the terms of the BSD license.
+# It defines the following variables:
+#   SCILAB_ROOT        - The root directory of the Scilab installation
+#   SCILAB_BINARY      - The path to the Scilab executable
+#   SCILAB_LIBRARIES   - A list of required and optional Scilab libraries
+#------------------------------------------------------------------------------
 
+# Skip search if already found
 if(SCILAB_ROOT AND SCILAB_LIBRARIES)
   set(Scilab_FIND_QUIETLY TRUE)
 endif()
+
+#------------------------------------------------------------------------------
+# Platform-specific configuration
+#------------------------------------------------------------------------------
 
 if(WIN32)
   get_filename_component(
@@ -43,7 +49,7 @@ elseif(APPLE)
   set(LIBSCILAB "scilab")
   set(SCILAB_BIN "scilab")
 
-else()
+else() # Linux/Unix
   set(SCILAB_LIBRARIES_PATHS
       "/usr/lib/x86_64-linux-gnu/scilab"
       "/usr/lib/scilab"
@@ -59,7 +65,15 @@ else()
   set(SCILAB_BIN "scilab-cli")
 endif()
 
+#------------------------------------------------------------------------------
+# Locate Scilab binary
+#------------------------------------------------------------------------------
+
 find_program(SCILAB_BINARY ${SCILAB_BIN} PATHS "/usr/bin" "/usr/local/bin")
+
+#------------------------------------------------------------------------------
+# Helper macro for finding optional libraries
+#------------------------------------------------------------------------------
 
 macro(
   _find_optional_lib
@@ -77,11 +91,19 @@ macro(
   endif()
 endmacro()
 
+#------------------------------------------------------------------------------
+# Find main Scilab library
+#------------------------------------------------------------------------------
+
 find_library(
   SCILAB_SCILAB_LIBRARY ${LIBSCILAB}
   PATHS ${SCILAB_LIBRARIES_PATHS}
   NO_DEFAULT_PATH
 )
+
+#------------------------------------------------------------------------------
+# Find optional Scilab libraries
+#------------------------------------------------------------------------------
 _find_optional_lib(SCILAB_CALL_SCILAB_LIBRARY scicall_scilab)
 _find_optional_lib(SCILAB_CONSOLE_MINIMAL_LIBRARY sciconsole-minimal)
 _find_optional_lib(SCILAB_COMPLETION_LIBRARY scicompletion)
@@ -100,7 +122,10 @@ _find_optional_lib(SCILAB_RENDERER_LIBRARY scirenderer)
 _find_optional_lib(SCILAB_GUI_LIBRARY scigui)
 _find_optional_lib(SCILAB_UI_DATA_LIBRARY sciui_data)
 
-# 正しいリンク順序でライブラリを構成
+#------------------------------------------------------------------------------
+# Construct the library list in correct link order
+#------------------------------------------------------------------------------
+
 set(SCILAB_LIBRARIES "")
 foreach(
   lib
@@ -130,6 +155,10 @@ foreach(
     )
   endif()
 endforeach()
+
+#------------------------------------------------------------------------------
+# Handle final result
+#------------------------------------------------------------------------------
 
 if(SCILAB_ROOT)
   include(FindPackageHandleStandardArgs)
