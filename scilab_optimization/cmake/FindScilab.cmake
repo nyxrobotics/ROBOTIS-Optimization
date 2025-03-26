@@ -43,6 +43,7 @@ find_program(
 #------------------------------------------------------------------------------
 
 set(_SCILAB_OPTIONAL_LIBS
+    # Required libraries
     scicall_scilab
     sciconsole-minimal
     scigui
@@ -57,6 +58,46 @@ set(_SCILAB_OPTIONAL_LIBS
     scilab-cli
     scixml
     sciexternal_objects
+    # Optional libraries
+    sciumfpack
+    sciscicos-cli
+    scihdf5
+    sciaction_binding
+    sciscicos
+    scigui-disable
+    sciui_data-disable
+    scihistory_browser
+    sciexternal_objects_java
+    scigraphic_export-disable
+    scigraphic_objects-disable
+    sciinterpolation
+    scigraphics-disable
+    scihistory_manager
+    sciparallel
+    scispecial_functions
+    scifunctions
+    scipreferences-cli
+    scimatio
+    scispreadsheet
+    scirandlib
+    scicommons-disable
+    sciarnoldi
+    sciscinotes-disable
+    scistatistics
+    scilab
+    scitclsci
+    scixcos-disable
+    sciaction_binding-disable
+    scijvm-disable
+    scisound
+    scioptimization
+    scigraphic_export
+    scisundials
+    sciscinotes
+    sciscicos_blocks-cli
+    scihistory_browser-disable
+    scihelptools
+    scixcos
 )
 
 set(SCILAB_LIBRARIES "")
