@@ -71,7 +71,7 @@ void ScilabOptimization::terminate()
   return;
 }
 
-void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K, double* S, int* row_S, int* col_S,
+bool ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K, double* S, int* row_S, int* col_S,
                                               double* E, double* E_img, int* row_E, int* col_E, double* A, int row_A,
                                               int col_A, double* B, int row_B, int col_B, double* Q, int row_Q,
                                               int col_Q, double* R, int row_R, int col_R)
@@ -102,22 +102,34 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   // Matrix A
   sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_A, row_A, col_A, A);
   if (sciErr.iErr)
+  {
     printError(&sciErr, 0);
+    return false;
+  }
 
   // Matrix B
   sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_B, row_B, col_B, B);
   if (sciErr.iErr)
+  {
     printError(&sciErr, 0);
+    return false;
+  }
 
   // Matrix Q
   sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_Q, row_Q, col_Q, Q);
   if (sciErr.iErr)
+  {
     printError(&sciErr, 0);
+    return false;
+  }
 
   // Matrix R
   sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_R, row_R, col_R, R);
   if (sciErr.iErr)
+  {
     printError(&sciErr, 0);
+    return false;
+  }
 
   // Matrix b
   SendScilabJob(const_cast<char*>("b = B / R * B'"));
@@ -141,18 +153,18 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   if (sciErr.iErr || row == 0 || col == 0)
   {
     printError(&sciErr, 0);
-    K = nullptr;
     *row_K = *col_K = 0;
+    return false;
   }
-  else
+  K = (double*)realloc(K, row * col * sizeof(double));
+  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_K, &row, &col, K);
+  if (sciErr.iErr)
   {
-    K = (double*)realloc(K, row * col * sizeof(double));
-    sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_K, &row, &col, K);
-    if (sciErr.iErr)
-      printError(&sciErr, 0);
-    *row_K = row;
-    *col_K = col;
+    printError(&sciErr, 0);
+    return false;
   }
+  *row_K = row;
+  *col_K = col;
 
   // Read Matrix S
   char variable_to_be_retrieved_S[] = "S";
@@ -160,18 +172,18 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   if (sciErr.iErr || row == 0 || col == 0)
   {
     printError(&sciErr, 0);
-    S = nullptr;
     *row_S = *col_S = 0;
+    return false;
   }
-  else
+  S = (double*)realloc(S, row * col * sizeof(double));
+  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_S, &row, &col, S);
+  if (sciErr.iErr)
   {
-    S = (double*)realloc(S, row * col * sizeof(double));
-    sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_S, &row, &col, S);
-    if (sciErr.iErr)
-      printError(&sciErr, 0);
-    *row_S = row;
-    *col_S = col;
+    printError(&sciErr, 0);
+    return false;
   }
+  *row_S = row;
+  *col_S = col;
 
   // Read Matrix E
   char variable_to_be_retrieved_E[] = "E";
@@ -179,21 +191,21 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   if (sciErr.iErr || row == 0 || col == 0)
   {
     printError(&sciErr, 0);
-    E = E_img = nullptr;
     *row_E = *col_E = 0;
+    return false;
   }
-  else
+  E = (double*)realloc(E, row * col * sizeof(double));
+  E_img = (double*)realloc(E_img, row * col * sizeof(double));
+  sciErr = readNamedComplexMatrixOfDouble(nullptr, variable_to_be_retrieved_E, &row, &col, E, E_img);
+  if (sciErr.iErr)
   {
-    E = (double*)realloc(E, row * col * sizeof(double));
-    E_img = (double*)realloc(E_img, row * col * sizeof(double));
-    sciErr = readNamedComplexMatrixOfDouble(nullptr, variable_to_be_retrieved_E, &row, &col, E, E_img);
-    if (sciErr.iErr)
-      printError(&sciErr, 0);
-    *row_E = row;
-    *col_E = col;
+    printError(&sciErr, 0);
+    return false;
   }
+  *row_E = row;
+  *col_E = col;
 
-  return;
+  return true;
 }
 
 }  // namespace robotis_framework
