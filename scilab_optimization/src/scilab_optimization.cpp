@@ -36,45 +36,29 @@
  */
 
 #include "scilab_optimization/scilab_optimization.h"
+#include <fstream>
+#include <cstdlib>
+#include <vector>
+#include <string>
+#include <cstring>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <iostream>
 
 namespace robotis_framework
 {
 ScilabOptimization::ScilabOptimization()
 {
-  initialize();
 }
-
 ScilabOptimization::~ScilabOptimization()
 {
-  terminate();
 }
 
 void ScilabOptimization::initialize()
 {
-  // Export SCI environment variable to the Scilab path
-  setenv("SCI", SCILAB_PATH, 1);
-  setenv("SCI_DISABLE_TK", "1", 1);
-#ifdef _MSC_VER
-  if (StartScilab(NULL, NULL, NULL) == FALSE)
-#else
-  if (StartScilab(const_cast<char*>(SCILAB_PATH), NULL, NULL) == FALSE)
-#endif
-  {
-    ROS_WARN("Error while calling StartScilab");
-  }
 }
-
 void ScilabOptimization::terminate()
 {
-  ROS_INFO("Terminating Scilab...");
-  if (TerminateScilab(NULL) == FALSE)
-  {
-    ROS_ERROR("Error while calling TerminateScilab");
-  }
-  else
-  {
-    ROS_INFO("Scilab terminated successfully.");
-  }
 }
 
 bool ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K, double* S, int* row_S, int* col_S,
@@ -83,133 +67,109 @@ bool ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
                                               int col_Q, double* R, int row_R, int col_R)
 {
   /*
-    This function calculates the optimal gain matrix K
-    such that the state-feedback law  u[n] = -Kx[n]  minimizes the
-    cost function
+  This function calculates the optimal gain matrix K
+  such that the state-feedback law  u[n] = -Kx[n]  minimizes the
+  cost function
 
-          J = Sum {x'Qx + u'Ru}
+        J = Sum {x'Qx + u'Ru}
 
-    subject to the state dynamics   x[n+1] = A*x[n] + B*u[n].
+  subject to the state dynamics   x[n+1] = A*x[n] + B*u[n].
 
-    Also calculated are the
-    Riccati equation solution S and the closed-loop eigenvalues E:
-                                -1
-     A'SA - S - (A'SB+N)(R+B'SB) (B'SA+N') + Q = 0,   E = EIG(A-B*K).
-  */
+  Also calculated are the
+  Riccati equation solution S and the closed-loop eigenvalues E:
+                              -1
+   A'SA - S - (A'SB+N)(R+B'SB) (B'SA+N') + Q = 0,   E = EIG(A-B*K).
+*/
 
-  SciErr sciErr;
+  std::string ram_path = "/dev/shm/scilab_tmp/";
+  mkdir(ram_path.c_str(), 0777);
+
+  std::string sce_file = ram_path + "solve_riccati.sce";
+  std::ofstream file(sce_file);
+  if (!file.is_open())
+    return false;
 
   /****** CALCULATION ******/
-  char variable_name_matrix_A[] = "A";
-  char variable_name_matrix_B[] = "B";
-  char variable_name_matrix_Q[] = "Q";
-  char variable_name_matrix_R[] = "R";
+  auto writeMatrix = [&](const std::string& name, double* data, int rows, int cols) {
+    file << name << " = [";
+    for (int i = 0; i < rows * cols; ++i)
+      file << data[i] << (i + 1 < rows * cols ? "," : "];\n");
+    file << name << " = matrix(" << name << ", " << rows << ", " << cols << ");\n";
+  };
 
-  // Matrix A
-  sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_A, row_A, col_A, A);
-  if (sciErr.iErr)
+  writeMatrix("A", A, row_A, col_A);
+  writeMatrix("B", B, row_B, col_B);
+  writeMatrix("Q", Q, row_Q, col_Q);
+  writeMatrix("R", R, row_R, col_R);
+
+  file << "b = B / R * B';\n";
+  file << "S = riccati(A, b, Q, 'd', 'eigen');\n";
+  file << "K = inv(B'*S*B + R) * (B'*S*A);\n";
+  file << "E = spec(A - B*K);\n";
+
+  file << "csvWrite(K, '" << ram_path << "K.csv');\n";  // Read Matrix K
+  file << "csvWrite(S, '" << ram_path << "S.csv');\n";  // Read Matrix S
+  file << "csvWrite(E, '" << ram_path << "E.csv');\n";  // Read Matrix E
+  file << "exit;\n";
+  file.close();
+
+  std::string command = "scilab-cli -nwni -nogui -f " + sce_file;
+  int result = std::system(command.c_str());
+  if (result != 0)
   {
-    printError(&sciErr, 0);
+    unlink((ram_path + "solve_riccati.sce").c_str());
     return false;
   }
 
-  // Matrix B
-  sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_B, row_B, col_B, B);
-  if (sciErr.iErr)
+  auto loadCSV = [](const std::string& filename, std::vector<double>& out, int* row, int* col) -> bool {
+    std::ifstream in(filename);
+    if (!in.is_open())
+      return false;
+    std::string line;
+    int rows = 0, cols = -1;
+    while (std::getline(in, line))
+    {
+      std::istringstream iss(line);
+      std::string val;
+      int current_cols = 0;
+      while (std::getline(iss, val, ','))
+      {
+        out.push_back(std::stod(val));
+        ++current_cols;
+      }
+      if (cols == -1)
+        cols = current_cols;
+      else if (cols != current_cols)
+        return false;
+      ++rows;
+    }
+    *row = rows;
+    *col = cols;
+    return true;
+  };
+
+  std::vector<double> K_v, S_v, E_v;
+  if (!loadCSV(ram_path + "K.csv", K_v, row_K, col_K) || !loadCSV(ram_path + "S.csv", S_v, row_S, col_S) ||
+      !loadCSV(ram_path + "E.csv", E_v, row_E, col_E) || *row_K <= 0 || *col_K <= 0 || *row_S <= 0 || *col_S <= 0 ||
+      K_v.empty() || S_v.empty())
   {
-    printError(&sciErr, 0);
+    std::cerr << "[ERROR] Failed to load matrices or invalid dimensions\n";
+    unlink((ram_path + "solve_riccati.sce").c_str());
+    unlink((ram_path + "K.csv").c_str());
+    unlink((ram_path + "S.csv").c_str());
+    unlink((ram_path + "E.csv").c_str());
     return false;
   }
 
-  // Matrix Q
-  sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_Q, row_Q, col_Q, Q);
-  if (sciErr.iErr)
-  {
-    printError(&sciErr, 0);
-    return false;
-  }
+  std::memcpy(K, K_v.data(), sizeof(double) * K_v.size());
+  std::memcpy(S, S_v.data(), sizeof(double) * S_v.size());
+  std::memcpy(E, E_v.data(), sizeof(double) * E_v.size());
+  std::memset(E_img, 0, sizeof(double) * (*row_E) * (*col_E));
 
-  // Matrix R
-  sciErr = createNamedMatrixOfDouble(nullptr, variable_name_matrix_R, row_R, col_R, R);
-  if (sciErr.iErr)
-  {
-    printError(&sciErr, 0);
-    return false;
-  }
-
-  // Matrix b
-  SendScilabJob(const_cast<char*>("b = B / R * B'"));
-
-  // Matrix S
-  SendScilabJob(const_cast<char*>("S = riccati(A,b,Q,'d','eigen')"));
-  // SendScilabJob(const_cast<char*>("disp(S);"));
-
-  // Matrix K
-  SendScilabJob(const_cast<char*>("K = inv(B'*S*B + R) * (B'*S*A)"));
-  // SendScilabJob(const_cast<char*>("disp(K);"));
-
-  // Matrix E
-  SendScilabJob(const_cast<char*>("E = spec(A - B*K)"));
-  // SendScilabJob(const_cast<char*>("disp(E);"));
-
-  // Read Matrix K
-  int row = 0, col = 0;
-  char variable_to_be_retrieved_K[] = "K";
-  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_K, &row, &col, NULL);
-  if (sciErr.iErr || row == 0 || col == 0)
-  {
-    printError(&sciErr, 0);
-    *row_K = *col_K = 0;
-    return false;
-  }
-  K = (double*)realloc(K, row * col * sizeof(double));
-  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_K, &row, &col, K);
-  if (sciErr.iErr)
-  {
-    printError(&sciErr, 0);
-    return false;
-  }
-  *row_K = row;
-  *col_K = col;
-
-  // Read Matrix S
-  char variable_to_be_retrieved_S[] = "S";
-  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_S, &row, &col, NULL);
-  if (sciErr.iErr || row == 0 || col == 0)
-  {
-    printError(&sciErr, 0);
-    *row_S = *col_S = 0;
-    return false;
-  }
-  S = (double*)realloc(S, row * col * sizeof(double));
-  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_S, &row, &col, S);
-  if (sciErr.iErr)
-  {
-    printError(&sciErr, 0);
-    return false;
-  }
-  *row_S = row;
-  *col_S = col;
-
-  // Read Matrix E
-  char variable_to_be_retrieved_E[] = "E";
-  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_E, &row, &col, NULL);
-  if (sciErr.iErr || row == 0 || col == 0)
-  {
-    printError(&sciErr, 0);
-    *row_E = *col_E = 0;
-    return false;
-  }
-  E = (double*)realloc(E, row * col * sizeof(double));
-  E_img = (double*)realloc(E_img, row * col * sizeof(double));
-  sciErr = readNamedComplexMatrixOfDouble(nullptr, variable_to_be_retrieved_E, &row, &col, E, E_img);
-  if (sciErr.iErr)
-  {
-    printError(&sciErr, 0);
-    return false;
-  }
-  *row_E = row;
-  *col_E = col;
+  unlink((ram_path + "solve_riccati.sce").c_str());
+  unlink((ram_path + "K.csv").c_str());
+  unlink((ram_path + "S.csv").c_str());
+  unlink((ram_path + "E.csv").c_str());
 
   return true;
 }
