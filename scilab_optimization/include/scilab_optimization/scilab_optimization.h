@@ -53,12 +53,13 @@ public:
   ScilabOptimization();
   ~ScilabOptimization();
 
-  static void initialize();
-  static bool solveRiccatiEquation(double* K, int* row_K, int* col_K, double* S, int* row_S, int* col_S, double* E,
-                                   double* E_img, int* row_E, int* col_E, double* A, int row_A, int col_A, double* B,
-                                   int row_B, int col_B, double* Q, int row_Q, int col_Q, double* R, int row_R,
-                                   int col_R);
-  static void terminate();
+  bool solveRiccatiEquation(double* K, int* row_K, int* col_K, double* S, int* row_S, int* col_S, double* E,
+                            double* E_img, int* row_E, int* col_E, double* A, int row_A, int col_A, double* B,
+                            int row_B, int col_B, double* Q, int row_Q, int col_Q, double* R, int row_R, int col_R);
+
+private:
+  void initialize();
+  void terminate();
 
 private:
 };

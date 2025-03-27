@@ -41,16 +41,19 @@ namespace robotis_framework
 {
 ScilabOptimization::ScilabOptimization()
 {
+  initialize();
 }
 
 ScilabOptimization::~ScilabOptimization()
 {
+  terminate();
 }
 
 void ScilabOptimization::initialize()
 {
   // Export SCI environment variable to the Scilab path
   setenv("SCI", SCILAB_PATH, 1);
+  setenv("SCI_DISABLE_TK", "1", 1);
 #ifdef _MSC_VER
   if (StartScilab(NULL, NULL, NULL) == FALSE)
 #else
