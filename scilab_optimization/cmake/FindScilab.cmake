@@ -46,20 +46,20 @@ set(_SCILAB_OPTIONAL_LIBS
     # Required libraries
     scicall_scilab
     sciconsole-minimal
-    scigui
     scigui-disable
-    sciui_data
+    scigui
     sciui_data-disable
-    scigraphics
+    sciui_data
     scigraphics-disable
-    scigraphic_objects
+    scigraphics
     scigraphic_objects-disable
-    scijvm
+    scigraphic_objects
     scijvm-disable
+    scijvm
     scirenderer
     scicompletion
-    scicommons
     scicommons-disable
+    scicommons
     scilocalization
     scilab-cli
     scixml
@@ -69,11 +69,11 @@ set(_SCILAB_OPTIONAL_LIBS
     sciumfpack
     sciscicos-cli
     scihdf5
-    sciaction_binding
     sciaction_binding-disable
+    sciaction_binding
     sciscicos
-    scihistory_browser
     scihistory_browser-disable
+    scihistory_browser
     sciinterpolation
     scihistory_manager
     sciparallel
@@ -84,20 +84,20 @@ set(_SCILAB_OPTIONAL_LIBS
     scispreadsheet
     scirandlib
     sciarnoldi
-    sciscinotes
     sciscinotes-disable
+    sciscinotes
     scistatistics
     scilab
     scitclsci
     scisound
     scioptimization
-    scigraphic_export
     scigraphic_export-disable
+    scigraphic_export
     scisundials
     sciscicos_blocks-cli
     scihelptools
-    scixcos
     scixcos-disable
+    scixcos
 )
 
 set(SCILAB_LIBRARIES "")
