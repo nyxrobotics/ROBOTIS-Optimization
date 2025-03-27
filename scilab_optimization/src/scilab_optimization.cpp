@@ -49,10 +49,12 @@ ScilabOptimization::~ScilabOptimization()
 
 void ScilabOptimization::initialize()
 {
+  // Export SCI environment variable to the Scilab path
+  setenv("SCI", SCILAB_PATH, 1);
 #ifdef _MSC_VER
   if (StartScilab(NULL, NULL, NULL) == FALSE)
 #else
-  if (StartScilab(const_cast<char*>(SCILIB_PATH), NULL, NULL) == FALSE)
+  if (StartScilab(const_cast<char*>(SCILAB_PATH), NULL, NULL) == FALSE)
 #endif
   {
     ROS_WARN("Error while calling StartScilab");
