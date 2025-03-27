@@ -127,62 +127,71 @@ void ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   // SendScilabJob(const_cast<char*>("disp(S);"));
 
   // Matrix K
-  SendScilabJob(const_cast<char*>("K = inv(B '*S*B+R)*(B' * S * A)"));
+  SendScilabJob(const_cast<char*>("K = inv(B'*S*B + R) * (B'*S*A)"));
   // SendScilabJob(const_cast<char*>("disp(K);"));
 
-  // eigenvalues E
-  SendScilabJob(const_cast<char*>("E = spec(A-B*K)"));
+  // Matrix E
+  SendScilabJob(const_cast<char*>("E = spec(A - B*K)"));
   // SendScilabJob(const_cast<char*>("disp(E);"));
 
   // Read Matrix K
   int row = 0, col = 0;
   char variable_to_be_retrieved_K[] = "K";
-
   sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_K, &row, &col, NULL);
-  if (sciErr.iErr)
+  if (sciErr.iErr || row == 0 || col == 0)
+  {
     printError(&sciErr, 0);
-
-  K = (double*)realloc(K, (row * col) * sizeof(double));
-
-  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_K, &row, &col, K);
-  if (sciErr.iErr)
-    printError(&sciErr, 0);
-
-  *row_K = row;
-  *col_K = col;
+    K = nullptr;
+    *row_K = *col_K = 0;
+  }
+  else
+  {
+    K = (double*)realloc(K, row * col * sizeof(double));
+    sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_K, &row, &col, K);
+    if (sciErr.iErr)
+      printError(&sciErr, 0);
+    *row_K = row;
+    *col_K = col;
+  }
 
   // Read Matrix S
   char variable_to_be_retrieved_S[] = "S";
-
   sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_S, &row, &col, NULL);
-  if (sciErr.iErr)
+  if (sciErr.iErr || row == 0 || col == 0)
+  {
     printError(&sciErr, 0);
-
-  S = (double*)realloc(S, (row * col) * sizeof(double));
-
-  sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_S, &row, &col, S);
-  if (sciErr.iErr)
-    printError(&sciErr, 0);
-
-  *row_S = row;
-  *col_S = col;
+    S = nullptr;
+    *row_S = *col_S = 0;
+  }
+  else
+  {
+    S = (double*)realloc(S, row * col * sizeof(double));
+    sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_S, &row, &col, S);
+    if (sciErr.iErr)
+      printError(&sciErr, 0);
+    *row_S = row;
+    *col_S = col;
+  }
 
   // Read Matrix E
   char variable_to_be_retrieved_E[] = "E";
-
   sciErr = readNamedMatrixOfDouble(nullptr, variable_to_be_retrieved_E, &row, &col, NULL);
-  if (sciErr.iErr)
+  if (sciErr.iErr || row == 0 || col == 0)
+  {
     printError(&sciErr, 0);
-
-  E = (double*)realloc(E, (row * col) * sizeof(double));
-  E_img = (double*)realloc(E_img, (row * col) * sizeof(double));
-
-  sciErr = readNamedComplexMatrixOfDouble(nullptr, variable_to_be_retrieved_E, &row, &col, E, E_img);
-  if (sciErr.iErr)
-    printError(&sciErr, 0);
-
-  *row_E = row;
-  *col_E = col;
+    E = E_img = nullptr;
+    *row_E = *col_E = 0;
+  }
+  else
+  {
+    E = (double*)realloc(E, row * col * sizeof(double));
+    E_img = (double*)realloc(E_img, row * col * sizeof(double));
+    sciErr = readNamedComplexMatrixOfDouble(nullptr, variable_to_be_retrieved_E, &row, &col, E, E_img);
+    if (sciErr.iErr)
+      printError(&sciErr, 0);
+    *row_E = row;
+    *col_E = col;
+  }
 
   return;
 }
