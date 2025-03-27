@@ -63,12 +63,15 @@ void ScilabOptimization::initialize()
 
 void ScilabOptimization::terminate()
 {
+  ROS_INFO("Terminating Scilab...");
   if (TerminateScilab(NULL) == FALSE)
   {
-    fprintf(stderr, "Error while calling TerminateScilab\n");
-    return;
+    ROS_ERROR("Error while calling TerminateScilab");
   }
-  return;
+  else
+  {
+    ROS_INFO("Scilab terminated successfully.");
+  }
 }
 
 bool ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K, double* S, int* row_S, int* col_S,
