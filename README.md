@@ -7,10 +7,12 @@ It is particularly suited for solving optimal control problems such as the discr
 
 ## Features
 
-- Launches Scilab from C++ using `StartScilab`
 - Solves discrete-time Riccati equations with user-defined `A`, `B`, `Q`, `R` matrices
 - Exposes optimal gain `K`, Riccati solution `S`, and closed-loop poles `E`
 - ROS-compatible and can be used in combination with other ROS packages
+- Uses `.sce` script files and CSV-based file I/O to interface with Scilab cleanly
+- Stores all intermediate files in RAM (`/dev/shm`) for speed and cleanup
+- Automatically prints `.sce` and `.csv` file contents to terminal for debugging
 
 ---
 
@@ -62,9 +64,7 @@ source devel/setup.bash
 #include "scilab_optimization/scilab_optimization.h"
 
 robotis_framework::ScilabOptimization solver;
-solver.initialize();
 solver.solveRiccatiEquation(...);  // Supply A, B, Q, R matrices here
-solver.terminate();
 ```
 
 ### CMake Configuration
@@ -164,7 +164,7 @@ These results are then retrieved from the Scilab interpreter and returned to the
 ### Function Signature
 
 ```cpp
-void solveRiccatiEquation(
+bool solveRiccatiEquation(
     double* K, int* row_K, int* col_K,
     double* S, int* row_S, int* col_S,
     double* E, double* E_img, int* row_E, int* col_E,
@@ -176,6 +176,11 @@ void solveRiccatiEquation(
 
 ### Notes
 
-- You must call `initialize()` before this method and `terminate()` afterward.
-- The Scilab backend is launched via `StartScilab()` and dynamically loads modules, so `LD_LIBRARY_PATH` must be set correctly.
-- Output matrices are dynamically allocated using `realloc()` internally. The caller should ensure safe memory usage and capture updated row/column sizes.
+- The Scilab backend is launched via `.sce` script using `scilab-cli`
+- The `.sce` script and `.csv` files are generated under `/dev/shm/scilab_tmp/` (RAM disk)
+- Intermediate files are automatically deleted after computation
+- The full contents of the generated `.sce` and `.csv` files are printed to stdout for debugging
+- Output matrices are copied into the user's memory buffers. Caller must provide sufficient space.
+- If Scilab execution or matrix loading fails, the method returns `false`
+
+---
