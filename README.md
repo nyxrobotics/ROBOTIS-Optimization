@@ -95,12 +95,25 @@ If using specific messages or services, include those as well.
 Some internal Scilab modules (e.g., `libscifunctions.so`) are loaded dynamically using `dlopen()`.  
 These cannot be resolved via RPATH or RUNPATH, so you **must** set `LD_LIBRARY_PATH` at runtime.
 
+### Option 1: Terminal
+
 ```bash
 export LD_LIBRARY_PATH=/usr/lib/scilab:$LD_LIBRARY_PATH
 rosrun your_package your_node
 ```
 
-This ensures that dynamically loaded Scilab libraries can be found at runtime.
+### Option 2: Inside a ROS launch file
+
+You can set the environment variable directly inside your `.launch` file using `<env>`:
+
+```xml
+<launch>
+  <env name="LD_LIBRARY_PATH" value="/usr/lib/scilab:$(env LD_LIBRARY_PATH)"/>
+  <node name="your_node" pkg="your_package" type="your_node" output="screen" />
+</launch>
+```
+
+This ensures that dynamically loaded Scilab libraries can be found at runtime regardless of the shell environment.
 
 ---
 
