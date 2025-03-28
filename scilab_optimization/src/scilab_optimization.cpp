@@ -54,11 +54,29 @@ ScilabOptimization::~ScilabOptimization()
 {
 }
 
-void ScilabOptimization::initialize()
+void ScilabOptimization::printSceContent(const std::string& path)
 {
+  std::ifstream in(path);
+  if (in.is_open())
+  {
+    std::cout << "\n--- SCE FILE CONTENT: " << path << " ---\n";
+    std::string line;
+    while (std::getline(in, line))
+      std::cout << line << "\n";
+    std::cout << "--- END SCE ---\n";
+  }
 }
-void ScilabOptimization::terminate()
+
+void ScilabOptimization::printCsvContent(const std::string& label, const std::string& path)
 {
+  std::ifstream in(path);
+  if (in.is_open())
+  {
+    std::cout << "\n" << label << " (CSV: " << path << "):\n";
+    std::string line;
+    while (std::getline(in, line))
+      std::cout << line << "\n";
+  }
 }
 
 bool ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K, double* S, int* row_S, int* col_S,
@@ -84,8 +102,8 @@ bool ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   std::string ram_path = "/dev/shm/scilab_tmp/";
   mkdir(ram_path.c_str(), 0777);
 
-  std::string sce_file = ram_path + "solve_riccati.sce";
-  std::ofstream file(sce_file);
+  std::string sce_path = ram_path + "solve_riccati.sce";
+  std::ofstream file(sce_path);
   if (!file.is_open())
     return false;
 
@@ -113,7 +131,9 @@ bool ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   file << "exit;\n";
   file.close();
 
-  std::string command = "scilab-cli -nwni -nogui -f " + sce_file;
+  printSceContent(sce_path);
+
+  std::string command = "scilab-cli -nwni -nogui -f " + sce_path;
   int result = std::system(command.c_str());
   if (result != 0)
   {
@@ -149,27 +169,35 @@ bool ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   };
 
   std::vector<double> K_v, S_v, E_v;
-  if (!loadCSV(ram_path + "K.csv", K_v, row_K, col_K) || !loadCSV(ram_path + "S.csv", S_v, row_S, col_S) ||
-      !loadCSV(ram_path + "E.csv", E_v, row_E, col_E) || *row_K <= 0 || *col_K <= 0 || *row_S <= 0 || *col_S <= 0 ||
-      K_v.empty() || S_v.empty())
+  std::string k_path = ram_path + "K.csv";
+  std::string s_path = ram_path + "S.csv";
+  std::string e_path = ram_path + "E.csv";
+
+  if (!loadCSV(k_path, K_v, row_K, col_K) || !loadCSV(s_path, S_v, row_S, col_S) ||
+      !loadCSV(e_path, E_v, row_E, col_E) || *row_K <= 0 || *col_K <= 0 || *row_S <= 0 || *col_S <= 0 || K_v.empty() ||
+      S_v.empty())
   {
     std::cerr << "[ERROR] Failed to load matrices or invalid dimensions\n";
-    unlink((ram_path + "solve_riccati.sce").c_str());
-    unlink((ram_path + "K.csv").c_str());
-    unlink((ram_path + "S.csv").c_str());
-    unlink((ram_path + "E.csv").c_str());
+    unlink(sce_path.c_str());
+    unlink(k_path.c_str());
+    unlink(s_path.c_str());
+    unlink(e_path.c_str());
     return false;
   }
+
+  printCsvContent("K", k_path);
+  printCsvContent("S", s_path);
+  printCsvContent("E", e_path);
 
   std::memcpy(K, K_v.data(), sizeof(double) * K_v.size());
   std::memcpy(S, S_v.data(), sizeof(double) * S_v.size());
   std::memcpy(E, E_v.data(), sizeof(double) * E_v.size());
   std::memset(E_img, 0, sizeof(double) * (*row_E) * (*col_E));
 
-  unlink((ram_path + "solve_riccati.sce").c_str());
-  unlink((ram_path + "K.csv").c_str());
-  unlink((ram_path + "S.csv").c_str());
-  unlink((ram_path + "E.csv").c_str());
+  unlink(sce_path.c_str());
+  unlink(k_path.c_str());
+  unlink(s_path.c_str());
+  unlink(e_path.c_str());
 
   return true;
 }

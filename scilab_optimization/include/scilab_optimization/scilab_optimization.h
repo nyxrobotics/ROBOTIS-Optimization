@@ -58,8 +58,8 @@ public:
                             int row_B, int col_B, double* Q, int row_Q, int col_Q, double* R, int row_R, int col_R);
 
 private:
-  void initialize();
-  void terminate();
+  void printSceContent(const std::string& path);
+  void printCsvContent(const std::string& label, const std::string& path);
 
 private:
 };
