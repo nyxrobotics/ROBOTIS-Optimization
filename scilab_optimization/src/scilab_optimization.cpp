@@ -174,8 +174,8 @@ bool ScilabOptimization::solveRiccatiEquation(double* K, int* row_K, int* col_K,
   std::string e_path = ram_path + "E.csv";
 
   if (!loadCSV(k_path, K_v, row_K, col_K) || !loadCSV(s_path, S_v, row_S, col_S) ||
-      !loadCSV(e_path, E_v, row_E, col_E) || *row_K <= 0 || *col_K <= 0 || *row_S <= 0 || *col_S <= 0 || K_v.empty() ||
-      S_v.empty())
+      !loadCSV(e_path, E_v, row_E, col_E) || *row_K <= 0 || *col_K <= 0 || *row_S <= 0 || *col_S <= 0 || *row_E <= 0 ||
+      *col_E <= 0 || K_v.empty() || S_v.empty() || E_v.empty())
   {
     std::cerr << "[ERROR] Failed to load matrices or invalid dimensions\n";
     unlink(sce_path.c_str());
